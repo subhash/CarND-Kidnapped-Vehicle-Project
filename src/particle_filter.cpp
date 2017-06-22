@@ -97,8 +97,8 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
     std::vector<LandmarkObs> predicted;
     for (Map::single_landmark_s landmark: landmarks) {
       LandmarkObs predicted_obs;
-      predicted_obs.x = landmark.x_f*cos(p.theta) - landmark.y_f*sin(p.theta) - p.x;
-      predicted_obs.y = landmark.x_f*sin(p.theta) + landmark.y_f*cos(p.theta) - p.y;
+      predicted_obs.x = landmark.x_f*cos(p.theta) + landmark.y_f*sin(p.theta) - p.x;
+      predicted_obs.y = - landmark.x_f*sin(p.theta) + landmark.y_f*cos(p.theta) - p.y;
       predicted_obs.id = landmark.id_i;
       predicted.push_back(predicted_obs);
     }
