@@ -53,13 +53,6 @@ inline double dist(double x1, double y1, double x2, double y2) {
 	return sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1));
 }
 
-inline float bivariate_pdf(float x, float y, float mu_x, float mu_y, float std_x, float std_y) {
-  float norm = (1/(2*std_x*std_y));
-  float x_term = pow((x-mu_x)/std_x, 2);
-  float y_term = pow((y-mu_y)/std_y, 2);
-  return norm*exp(-0.5*(x_term + y_term));
-}
-
 inline double * getError(double gt_x, double gt_y, double gt_theta, double pf_x, double pf_y, double pf_theta) {
 	static double error[3];
 	error[0] = fabs(pf_x - gt_x);
