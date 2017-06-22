@@ -20,10 +20,10 @@
 
 using namespace std;
 
-inline float bivariate_pdf(float x, float y, float mu_x, float mu_y, float std_x, float std_y) {
-  float norm = (1/(2*std_x*std_y));
-  float x_term = pow((x-mu_x)/std_x, 2);
-  float y_term = pow((y-mu_y)/std_y, 2);
+inline double bivariate_pdf(double x, double y, double mu_x, double mu_y, double std_x, double std_y) {
+  double norm = (1/(2*M_PI*std_x*std_y));
+  double x_term = pow((x-mu_x)/std_x, 2);
+  double y_term = pow((y-mu_y)/std_y, 2);
   return norm*exp(-0.5*(x_term + y_term));
 }
 
@@ -82,10 +82,14 @@ void ParticleFilter::dataAssociation(std::vector<LandmarkObs> predicted, std::ve
 	//   observed measurement to this particular landmark.
 	// NOTE: this method will NOT be called by the grading code. But you will probably find it useful to 
 	//   implement this method and use it as a helper during the updateWeights phase.
-  double distance = 10000000.0;
+  double min_distance = 10000000.0;
   for (LandmarkObs& obs: observations) {
     for (LandmarkObs p: predicted) {
-      if (distance > dist(p.x, p.y, obs.x, obs.y)) obs.id =  p.id;
+      double distance = dist(p.x, p.y, obs.x, obs.y);
+      if (min_distance > distance) {
+        obs.id =  p.id;
+        min_distance = distance;
+      }
     }
   }
 }
@@ -103,22 +107,26 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 	//   3.33
 	//   http://planning.cs.uiuc.edu/node99.html
 
-  vector<Map::single_landmark_s> landmarks = map_landmarks.landmark_list;
-  for (Particle p: particles) {
+  vector<Map::single_landmark_s> landmarks = map_landmarks.landmark_list; //filter_landmarks(map_landmarks.landmark_list, sensor_range);
+  for (Particle& p: particles) {
     std::vector<LandmarkObs> predicted;
     for (Map::single_landmark_s landmark: landmarks) {
       LandmarkObs predicted_obs;
-      predicted_obs.x = landmark.x_f*cos(p.theta) + landmark.y_f*sin(p.theta) - p.x;
-      predicted_obs.y = - landmark.x_f*sin(p.theta) + landmark.y_f*cos(p.theta) - p.y;
+      double land_x = landmark.x_f, land_y = landmark.y_f;
+      land_x -= p.x;
+      land_y -= p.y;
+      predicted_obs.x = land_x*cos(p.theta) + land_y*sin(p.theta);
+      predicted_obs.y = - land_x*sin(p.theta) + land_y*cos(p.theta);
       predicted_obs.id = landmark.id_i;
       predicted.push_back(predicted_obs);
     }
     dataAssociation(predicted, observations);
-    float weight = 1.0;
+    double weight = 1.0;
     for (LandmarkObs obs: observations) {
       for (LandmarkObs predicted_obs: predicted) {
         if (obs.id == predicted_obs.id) {
-          weight *= bivariate_pdf(obs.x, obs.y, predicted_obs.x, predicted_obs.y, std_landmark[0], std_landmark[1]);
+          double prob = bivariate_pdf(obs.x, obs.y, predicted_obs.x, predicted_obs.y, std_landmark[0], std_landmark[1]);
+          weight *= prob;
         }
       }
     }
